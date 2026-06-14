@@ -27,7 +27,7 @@ A safe, fast, and interactive macOS system cache & temp file cleaner built in Py
 ```bash
 git clone https://github.com/yanpaingkyaw/cleaner_cli.git
 cd cleaner_cli
-pip install -e .
+pip3 install -e .
 ```
 
 This installs the `cleaner` command globally (or in your active virtual environment).
