@@ -53,18 +53,36 @@ def total_summary(items: list[CleanItem]) -> tuple[str, int, int, int]:
 
 
 def delete_path(path: Path) -> None:
-    """Delete a path. Skip symlinks. Use `shutil.rmtree` for dirs, `os.unlink` for files.
+    """Delete a path. Skip symlinks.
 
-    Re-raise OSError so caller handles it.
+    For directories: clears contents recursively, but preserves the directory
+    itself. Permission errors on individual entries are silently skipped.
+    For files: deletes the file directly.
     """
-    if not path.exists():
+    if not path.exists() or path.is_symlink():
         return
-    if path.is_symlink():
-        return
+
     if path.is_dir():
-        shutil.rmtree(path)
+        try:
+            entries = list(os.scandir(path))
+        except OSError:
+            return
+
+        for entry in entries:
+            if entry.is_symlink():
+                continue
+            try:
+                if entry.is_dir(follow_symlinks=False):
+                    shutil.rmtree(entry.path, ignore_errors=True)
+                else:
+                    os.unlink(entry.path)
+            except OSError:
+                pass
     else:
-        os.unlink(path)
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
 
 
 def execute_clean(

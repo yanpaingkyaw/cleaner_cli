@@ -35,7 +35,9 @@ def test_delete_path_file(make_tree):
 def test_delete_path_dir(make_tree):
     base = make_tree("del_dir", file_count=2)
     delete_path(base)
-    assert not base.exists()
+    # delete_path clears directory contents but preserves the directory itself
+    assert base.exists()
+    assert len(list(base.iterdir())) == 0
 
 
 def test_delete_path_skips_symlink(make_tree):
