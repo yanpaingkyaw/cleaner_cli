@@ -4,7 +4,7 @@ A safe, fast, and interactive macOS system cache & temp file cleaner built in Py
 
 > **Dry-run by default.** Preview everything before you delete. No accidental data loss.
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ---
@@ -34,7 +34,7 @@ This installs the `cleaner` command globally (or in your active virtual environm
 
 ### Requirements
 
-- Python 3.10+
+- Python 3.9+
 - macOS (uses macOS-specific paths like `~/Library/Caches`)
 
 ---

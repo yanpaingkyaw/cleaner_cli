@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "cleaner"
 version = "0.1.0"
 description = "macOS system cache & temp file cleaner CLI"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 dependencies = [
     "click>=8.0",
     "rich>=13.0",
