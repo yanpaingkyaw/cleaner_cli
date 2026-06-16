@@ -22,20 +22,43 @@ A safe, fast, and interactive macOS system cache & temp file cleaner built in Py
 
 ## 🚀 Installation
 
-### From source (recommended)
+Choose one of the following methods.
+
+### 1. Binary Download (simplest — no Python required)
+
+1. Download the correct binary for your Mac from the [Releases page](https://github.com/yanpaingkyaw/cleaner_cli/releases):
+   - `cleaner-darwin-x86_64` — Intel Macs
+   - `cleaner-darwin-arm64` — Apple Silicon (M1/M2/M3)
+2. Make it executable and move it into your `PATH`:
+   ```bash
+   chmod +x cleaner-darwin-arm64       # use x86_64 for Intel
+   mv cleaner-darwin-arm64 /usr/local/bin/cleaner
+   ```
+3. Run:
+   ```bash
+   cleaner --all
+   ```
+
+### 2. Homebrew (one-liner)
+
+```bash
+brew tap yanpaingkyaw/tap
+brew install cleaner-cli
+```
+
+Then run `cleaner` normally.
+
+### 3. From source (for developers)
+
+Requires Python 3.9+ and macOS.
 
 ```bash
 git clone https://github.com/yanpaingkyaw/cleaner_cli.git
 cd cleaner_cli
-pip install -e .
+pip install -e ".[dev]"
 ```
 
-This installs the `cleaner` command globally (or in your active virtual environment).
-
-### Requirements
-
-- Python 3.9+
-- macOS (uses macOS-specific paths like `~/Library/Caches`)
+This installs the `cleaner` command globally (or in your active virtual environment) and includes development dependencies.
 
 ---
 

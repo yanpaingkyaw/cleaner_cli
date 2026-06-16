@@ -15,6 +15,12 @@ dependencies = [
 [project.scripts]
 cleaner = "cleaner.cli:main"
 
+[project.optional-dependencies]
+dev = [
+    "pyinstaller>=6.0",
+    "pytest>=7.0",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
