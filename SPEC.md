@@ -694,15 +694,19 @@ def test_cli_yes_without_force():
 
 ---
 
-## 14. Non-Goals (Out of Scope)
+## 14. Non-Goals (Original v0.1 — some addressed in v0.2)
 
 - System-level directories requiring `sudo`.
-- Browser cache cleaning (Safari, Chrome, Firefox).
 - Scheduled/cron automation.
-- Config files (`.cleanerrc`).
-- Undo/restore from trash (we delete permanently).
+- Undo/restore from trash (partially addressed via `--move-to-trash`).
 - GUI / TUI.
 - Cross-platform support (macOS only).
+
+### Implemented in v0.2
+
+- Browser cache cleaning (Safari, Chrome, Firefox)
+- Config files (`.cleanerrc`, `~/.config/cleaner/config.json`)
+- Additional dev-tool caches (npm, Yarn, pip, Docker, CoreSimulator)
 
 ---
 

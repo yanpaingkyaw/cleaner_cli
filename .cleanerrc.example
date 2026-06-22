@@ -1,0 +1,14 @@
+{
+  "exclude_paths": [
+    "~/Library/Caches/com.apple.Safari/WebKitCache"
+  ],
+  "default_flags": ["caches", "logs", "tmp"],
+  "custom_rules": [
+    {
+      "name": "my-app-cache",
+      "label": "My App Cache",
+      "path": "~/Library/Caches/com.example.myapp",
+      "description": "Cache for a custom application"
+    }
+  ]
+}

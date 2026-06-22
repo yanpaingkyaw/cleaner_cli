@@ -38,6 +38,26 @@ jobs:
       - name: Rename binary with architecture
         run: mv dist/cleaner dist/cleaner-darwin-${{ matrix.arch }}
 
+      - name: Codesign binary (optional)
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
+        run: |
+          if [ -z "$MACOS_CERTIFICATE" ]; then
+            echo "No signing certificate configured; skipping codesign."
+            exit 0
+          fi
+          KEYCHAIN=build.keychain
+          CERT_PATH=$RUNNER_TEMP/certificate.p12
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$CERT_PATH"
+          security create-keychain -p "$MACOS_KEYCHAIN_PWD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$MACOS_KEYCHAIN_PWD" "$KEYCHAIN"
+          security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PWD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security list-keychain -d user -s "$KEYCHAIN"
+          codesign --force --sign - dist/cleaner-darwin-${{ matrix.arch }}
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -48,6 +68,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -55,8 +78,29 @@ jobs:
           pattern: cleaner-darwin-*
           merge-multiple: true
 
+      - name: Compute checksums and update Homebrew formula
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA_X86=$(sha256sum artifacts/cleaner-darwin-x86_64 | awk '{print $1}')
+          SHA_ARM=$(sha256sum artifacts/cleaner-darwin-arm64 | awk '{print $1}')
+          python scripts/update_homebrew_formula.py "$VERSION" "$SHA_X86" "$SHA_ARM"
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*
+          files: |
+            artifacts/*
+            homebrew/cleaner-cli.rb
           generate_release_notes: true
+
+      - name: Commit updated Homebrew formula
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add homebrew/cleaner-cli.rb
+          if git diff --staged --quiet; then
+            echo "No formula changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: update Homebrew formula for ${GITHUB_REF_NAME}"
+          git push

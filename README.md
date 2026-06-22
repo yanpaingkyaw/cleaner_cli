@@ -4,7 +4,7 @@ A safe, fast, and interactive macOS system cache & temp file cleaner built in Py
 
 > **Dry-run by default.** Preview everything before you delete. No accidental data loss.
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ---
@@ -12,11 +12,13 @@ A safe, fast, and interactive macOS system cache & temp file cleaner built in Py
 ## ✨ Features
 
 - **🔒 Dry-run by default** — see exactly what would be deleted before anything happens
-- **🎯 Selective cleaning** — choose only the categories you want (caches, logs, temp, trash, Xcode)
+- **🎯 Selective cleaning** — choose categories (caches, logs, temp, trash, Xcode, browsers, dev tools)
 - **📊 Beautiful terminal output** — Rich-powered tables with sizes and item counts
-- **⚡ Fast scanning** — recursively walks directories, skips symlinks, handles permission errors
-- **🛡️ Safe deletion** — `--force` required; `--yes` for automation
-- **🧪 Fully tested** — 25 unit tests covering scanning, cleaning, rules, and CLI
+- **⚡ Fast scanning** — `os.scandir`-based recursive walks with cached stat
+- **🛡️ Safe deletion** — dry-run by default; `--force` required; `--move-to-trash` for reversible cleanup
+- **🤖 Scriptable** — `--json`, `--quiet`, `--threshold`, and `--exclude` for automation
+- **⚙️ Configurable** — `.cleanerrc` / `~/.config/cleaner/config.json` for custom rules and excludes
+- **🧪 Fully tested** — unit tests covering scanning, cleaning, rules, config, and CLI
 
 ---
 
@@ -50,7 +52,7 @@ Then run `cleaner` normally.
 
 ### 3. From source (for developers)
 
-Requires Python 3.9+ and macOS.
+Requires Python 3.10+ and macOS.
 
 ```bash
 git clone https://github.com/yanpaingkyaw/cleaner_cli.git
@@ -121,9 +123,23 @@ Type `yes` or `y` to confirm.
 | `--tmp` | Clean temp files (`$TMPDIR`) |
 | `--trash` | Empty `~/.Trash` |
 | `--xcode` | Clean `~/Library/Developer/Xcode/DerivedData` |
+| `--simulators` | Clean CoreSimulator caches |
+| `--safari` | Clean Safari browser cache |
+| `--chrome` | Clean Chrome browser cache |
+| `--firefox` | Clean Firefox browser cache |
+| `--npm` | Clean npm cache |
+| `--yarn` | Clean Yarn cache |
+| `--pip` | Clean pip cache |
+| `--docker` | Clean Docker Desktop data |
 | `--all` | Select all categories above |
 | `--force` | **Required** to enable actual deletion |
 | `--yes`, `-y` | Skip the confirmation prompt (requires `--force`) |
+| `--move-to-trash` | Move items to Trash instead of permanent delete (requires `--force`) |
+| `--json` | Output scan/clean results as JSON |
+| `--quiet`, `-q` | Suppress non-essential output |
+| `--exclude PATH` | Exclude a path from scan/delete (repeatable) |
+| `--threshold SIZE` | Only include categories at or above size (e.g. `10MB`, `1GB`) |
+| `--sort-size` | Sort categories by size (largest first) |
 | `--version` | Show version |
 | `--help` | Show help and all options |
 
@@ -139,11 +155,43 @@ cleaner --caches --logs --force
 # Clean everything, no prompts (CI/scripts)
 cleaner --all --force --yes
 
-# Clean Xcode build artifacts only
-cleaner --xcode --force
+# JSON output for scripting
+cleaner --all --json
+
+# Only show categories >= 100 MB, sorted by size
+cleaner --all --threshold 100MB --sort-size
+
+# Reversible cleanup via Trash
+cleaner --caches --force --move-to-trash
+
+# Exclude a path from cleaning
+cleaner --caches --exclude ~/Library/Caches/com.apple.Safari
 ```
 
 > ⚠️ **Without `--force`, nothing is ever deleted.** Every command is safe to run.
+
+---
+
+## ⚙️ Configuration
+
+Copy [`.cleanerrc.example`](.cleanerrc.example) to `.cleanerrc` in your project directory, or create `~/.config/cleaner/config.json`:
+
+```json
+{
+  "exclude_paths": ["~/Library/Caches/com.apple.Safari/WebKitCache"],
+  "default_flags": ["caches", "logs"],
+  "custom_rules": [
+    {
+      "name": "my-app-cache",
+      "label": "My App Cache",
+      "path": "~/Library/Caches/com.example.myapp",
+      "description": "Cache for a custom application"
+    }
+  ]
+}
+```
+
+When no CLI flags are provided, `default_flags` from config are used automatically.
 
 ---
 
@@ -151,18 +199,7 @@ cleaner --xcode --force
 
 ```bash
 python -m pytest tests/ -v
-```
-
-```
-============================= test session starts ==============================
-collected 25 items
-
-tests/test_cleaner.py .......                                          [ 28%]
-tests/test_cli.py .....                                                [ 48%]
-tests/test_rules.py ......                                             [ 76%]
-tests/test_scanner.py .....                                            [100%]
-
-============================== 25 passed in 0.94s ==============================
+ruff check src tests
 ```
 
 ---
@@ -171,23 +208,22 @@ tests/test_scanner.py .....                                            [100%]
 
 ```
 cleaner-cli/
-├── pyproject.toml          # Build & dependency config
-├── README.md               # This file
-├── SPEC.md                 # Full AI development spec
-├── src/
-│   └── cleaner/
-│       ├── __init__.py     # Version
-│       ├── __main__.py     # Entry point
-│       ├── cli.py          # Click CLI definition
-│       ├── scanner.py      # Directory walking & size calculation
-│       ├── cleaner.py      # Dry-run & deletion logic
-│       └── rules.py        # Cleaning category definitions
+├── pyproject.toml
+├── README.md
+├── SPEC.md
+├── .cleanerrc.example
+├── scripts/
+│   └── update_homebrew_formula.py
+├── .github/workflows/
+│   ├── ci.yml
+│   └── release.yml
+├── src/cleaner/
+│   ├── cli.py
+│   ├── cleaner.py
+│   ├── config.py
+│   ├── rules.py
+│   └── scanner.py
 └── tests/
-    ├── conftest.py         # Shared pytest fixtures
-    ├── test_cleaner.py
-    ├── test_cli.py
-    ├── test_rules.py
-    └── test_scanner.py
 ```
 
 ---
@@ -210,6 +246,13 @@ pip install -e ".[dev]"
 
 Type hints are used throughout. The project targets Python 3.10+.
 
+Use pre-commit for local linting:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
 ---
 
 ## 🧹 What Gets Cleaned?
@@ -221,6 +264,10 @@ Type hints are used throughout. The project targets Python 3.10+.
 | Temp Files | `$TMPDIR` | 10 MB – 200 MB |
 | Trash | `~/.Trash` | Varies |
 | Xcode DerivedData | `~/Library/Developer/Xcode/DerivedData` | 1 GB – 20 GB+ |
+| CoreSimulator | `~/Library/Developer/CoreSimulator/Caches` | 100 MB – 5 GB |
+| Safari / Chrome / Firefox | Browser cache dirs | Varies |
+| npm / Yarn / pip | Dev tool caches | Varies |
+| Docker Desktop | Container data | Can be very large |
 
 > ⚠️ Only **user-writable** directories are targeted. System directories (e.g., `/Library/Caches`) are never touched.
 
@@ -232,7 +279,8 @@ Type hints are used throughout. The project targets Python 3.10+.
 - **Confirmation prompt** — `--force` alone still asks before deleting
 - **Symlink protection** — symlinks are never followed or deleted
 - **Permission-safe** — unreadable files are skipped with a warning, never crashing
-- **Missing-path handling** — non-existent directories show `0 B` and are silently skipped
+- **Reversible cleanup** — `--move-to-trash` moves items to `~/.Trash` instead of permanent delete
+- **Accurate reporting** — deletion reports bytes actually freed, and surfaces partial failures
 
 ---
 

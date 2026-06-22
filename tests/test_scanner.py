@@ -1,7 +1,9 @@
-import pytest
 import os
 from pathlib import Path
-from cleaner.scanner import humanize_size, scan_directory
+
+import pytest
+
+from cleaner.scanner import humanize_size, is_excluded, parse_size, scan_directory
 
 
 def test_humanize_size():
@@ -11,6 +13,25 @@ def test_humanize_size():
     assert humanize_size(1_500_000) == "1.4 MB"
     assert humanize_size(1_073_741_824) == "1.0 GB"
     assert humanize_size(1_099_511_627_776) == "1.0 TB"
+
+
+def test_parse_size():
+    assert parse_size("1024") == 1024
+    assert parse_size("10MB") == 10 * 1024 * 1024
+    assert parse_size("1.5 GB") == int(1.5 * 1024**3)
+
+
+def test_parse_size_invalid():
+    with pytest.raises(ValueError):
+        parse_size("not-a-size")
+
+
+def test_is_excluded(make_tree):
+    base = make_tree("exclude_root", file_count=1)
+    sub = base / "keep"
+    sub.mkdir()
+    (sub / "secret.txt").write_text("secret")
+    assert is_excluded(sub / "secret.txt", {sub})
 
 
 def test_scan_empty(make_tree):
@@ -52,3 +73,13 @@ def test_scan_skips_symlinks(make_tree):
     os.symlink(target, link)
     result = scan_directory("symlink", base)
     assert result.file_count == 1
+
+
+def test_scan_respects_exclude(make_tree):
+    base = make_tree("exclude_scan", file_count=1, file_size=100)
+    keep = base / "keep"
+    keep.mkdir()
+    (keep / "file.txt").write_bytes(b"x" * 100)
+    result = scan_directory("exclude", base, exclude_paths={keep})
+    assert result.file_count == 1
+    assert result.total_bytes == 100

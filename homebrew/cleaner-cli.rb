@@ -1,15 +1,15 @@
 class CleanerCli < Formula
   desc "macOS system cache & temp file cleaner CLI"
   homepage "https://github.com/yanpaingkyaw/cleaner_cli"
-  version "0.1.0"
+  version "0.2.0"
   license "MIT"
 
   if Hardware::CPU.intel?
-    url "https://github.com/yanpaingkyaw/cleaner_cli/releases/download/v0.1.0/cleaner-darwin-x86_64"
-    sha256 "REPLACE_WITH_X86_64_SHA256"
+    url "https://github.com/yanpaingkyaw/cleaner_cli/releases/download/v0.2.0/cleaner-darwin-x86_64"
+    sha256 "pending-release"
   else
-    url "https://github.com/yanpaingkyaw/cleaner_cli/releases/download/v0.1.0/cleaner-darwin-arm64"
-    sha256 "REPLACE_WITH_ARM64_SHA256"
+    url "https://github.com/yanpaingkyaw/cleaner_cli/releases/download/v0.2.0/cleaner-darwin-arm64"
+    sha256 "pending-release"
   end
 
   def install
